@@ -6,10 +6,13 @@
 
 #define MAX_LINE 80 /* 80 chars per line, per command */
 
+void run_sequential(char args[40], char *slice, pid_t pid);
+void run_parallel(char args[40], char *slice, pid_t pid);
+
 int main(int argc, char *argv[])
 {
     char args[MAX_LINE/2 + 1];	/* command line has max of 40 arguments */
-    int should_run = 1, verify_style = 1, count;
+    int should_run = 1, verify_style = 1;
     char *slice;
     pid_t pid;
     FILE *file;
@@ -48,23 +51,8 @@ int main(int argc, char *argv[])
                     continue;
                 } 
 
-                // slicing the line of commands
-                slice = strtok(args, ";");
-                while (slice != NULL)
-                {
-                    pid = fork();
-
-                    if (pid > 0) // shell waits for the end of the commands processes
-                    {
-                        wait(NULL);
-                    }
-                    else // run the command in terminal and ends the child process
-                    {
-                        system(slice);
-                        exit(pid);
-                    }
-                    slice = strtok(NULL, ";");
-                }
+                // runing the command line in terminal
+                run_sequential(args, slice, pid);
 
             }
             // parallel mode
@@ -84,34 +72,55 @@ int main(int argc, char *argv[])
                     continue;
                 } 
 
-                count = 0;
-
-                // slicing the line of commands
-                slice = strtok(args, ";");
-                while (slice != NULL)
-                {
-                    count++;
-                    pid = fork();
-
-                    if (pid == 0) // run the command in terminal and ends the child process
-                    {
-                        system(slice);
-                        exit(pid);
-                    }
-                    slice = strtok(NULL, ";");
-                }
-                for (int i = 0; i < count; i++)
-                {
-                    if (pid > 0) // shell waits for the end of the commands processes
-                    {
-                        wait(NULL);
-                    }
-                }
-                       
+                // runing the command line in terminal
+                run_parallel(args, slice, pid);      
             }  
         }
     }
-    
-    
 	return 0;
+}
+
+void run_sequential(char args[40], char *slice, pid_t pid){
+    slice = strtok(args, ";");
+    while (slice != NULL)
+    {
+        pid = fork();
+
+        if (pid > 0) // shell waits for the end of the commands processes
+        {
+            wait(NULL);
+        }
+        else // run the command in terminal and ends the child process
+        {
+            system(slice);
+            exit(pid);
+        }
+        slice = strtok(NULL, ";");
+    }
+}
+
+void run_parallel(char args[40], char *slice, pid_t pid){
+    int count = 0;
+
+    // slicing the line of commands
+    slice = strtok(args, ";");
+    while (slice != NULL)
+    {
+        count++;
+        pid = fork();
+
+        if (pid == 0) // run the command in terminal and ends the child process
+        {
+            system(slice);
+            exit(pid);
+        }
+        slice = strtok(NULL, ";");
+    }
+    for (int i = 0; i < count; i++)
+    {
+        if (pid > 0) // shell waits for the end of the commands processes
+        {
+            wait(NULL);
+        }
+    }
 }
