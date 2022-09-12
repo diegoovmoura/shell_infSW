@@ -9,72 +9,109 @@
 int main(int argc, char *argv[])
 {
     char args[MAX_LINE/2 + 1];	/* command line has max of 40 arguments */
-    int should_run = 1;		/* flag to help exit program*/
+    int should_run = 1, verify_style = 1, count;
+    char *slice;
     pid_t pid;
-    
-    if (argc <= 1)
+    FILE *file;
+
+    if (argc > 1) // BATCH
+    {
+        file = fopen(argv[1], "r");
+
+        if (file == NULL)
+        {
+            printf("error");
+            return 0;
+        }
+        
+    }  
+    else // INERATIVE
     {
         while (should_run) {
-            printf("dovm seq> ");
-            fflush(stdout);
 
-            fgets(args, sizeof(args), stdin);
-            args[strlen(args) - 1] = 0;
-            
-            if (strcmp(args, "exit") == 0) {  
-                return 0;
-            } 
-
-            pid = fork();
-            if (pid > 0)
+            // sequential mode
+            if (verify_style == 1)
             {
-                wait(NULL);
+                printf("dovm seq> ");
+                fflush(stdout);
+
+                fgets(args, sizeof(args), stdin);
+                args[strlen(args) - 1] = 0;
+                
+                if (strcmp(args, "exit") == 0) // exit 
+                {  
+                    return 0;
+                }
+                if (strcmp(args, "style parallel") == 0) //changing style
+                {  
+                    verify_style = 0;
+                    continue;
+                } 
+
+                // slicing the line of commands
+                slice = strtok(args, ";");
+                while (slice != NULL)
+                {
+                    pid = fork();
+
+                    if (pid > 0) // shell waits for the end of the commands processes
+                    {
+                        wait(NULL);
+                    }
+                    else // run the command in terminal and ends the child process
+                    {
+                        system(slice);
+                        exit(pid);
+                    }
+                    slice = strtok(NULL, ";");
+                }
+
             }
+            // parallel mode
             else
             {
-                system(args);
-                exit(pid);
-            }
-            
-            /*
-            After read the input, the next steps are:
-                - create n child process with fork() command
-                - the child process will invoke execvp()
-                - parent will invoke wait() unless command line include &	 
-            */
-        }
-        /* code */
-    } else {
-        while (should_run) {
-            printf("dovm par> ");
-            fflush(stdout);
+                printf("dovm par> ");
+                fflush(stdout);
 
-            fgets(args, sizeof(args), stdin);
-            args[strlen(args) - 1] = 0;
-            
-            if (strcmp(args, "exit") == 0) {
-                return 0;
-            } 
+                fgets(args, sizeof(args), stdin);
+                args[strlen(args) - 1] = 0;
+                
+                if (strcmp(args, "exit") == 0) {
+                    return 0;
+                } 
+                if (strcmp(args, "style sequential") == 0) {  
+                    verify_style = 1;
+                    continue;
+                } 
 
-            pid = fork();
-            if (pid > 0)
-            {
-                wait(NULL);
-            }
-            else
-            {
-                system(args);
-                exit(pid);
-            }
-            
-            /*
-            After read the input, the next steps are:
-                - create n child process with fork() command
-                - the child process will invoke execvp()
-                - parent will invoke wait() unless command line include &	 
-            */
+                count = 0;
+
+                // slicing the line of commands
+                slice = strtok(args, ";");
+                while (slice != NULL)
+                {
+                    count++;
+                    pid = fork();
+
+                    if (pid == 0) // run the command in terminal and ends the child process
+                    {
+                        system(slice);
+                        exit(pid);
+                    }
+                    slice = strtok(NULL, ";");
+                }
+                for (int i = 0; i < count; i++)
+                {
+                    if (pid > 0) // shell waits for the end of the commands processes
+                    {
+                        wait(NULL);
+                    }
+                }
+                       
+            }  
         }
     }
+    
     
 	return 0;
 }
