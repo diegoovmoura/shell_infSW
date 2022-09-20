@@ -86,7 +86,7 @@ void run_sequential(char args[MAX_LINE_LENGTH], pid_t pid)
     while (slice != NULL)
     {
         char *command_args[20] = {0};
-        char aux[20][20];
+        char aux[20][20] = {0};
         
         // slicing again to take the command arguments
         int count = 0, j = 0;
@@ -105,7 +105,7 @@ void run_sequential(char args[MAX_LINE_LENGTH], pid_t pid)
                 j++;
             }
         }   
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count +1; i++)
         {
             command_args[i] = aux[i];   
         }
@@ -121,30 +121,55 @@ void run_sequential(char args[MAX_LINE_LENGTH], pid_t pid)
             execvp(command_args[0], command_args);
             exit(pid);
         }
+
         slice = strtok(NULL, ";");
-        printf("%s", slice);
     }
 }
 
 void run_parallel(char args[40], pid_t pid)
 {
-    int count = 0;
+    int a = 0;
 
     // slicing the line of commands
     char *slice = strtok(args, ";");
     while (slice != NULL)
     {
-        count++;
+        char *command_args[20] = {0};
+        char aux[20][20] = {0};
+        
+        // slicing again to take the command arguments
+        int count = 0, j = 0;
+        for (int i = 0; i < strlen(slice); i++)
+        {
+            // if space or NULL found, assign NULL into aux
+            if(slice[i]==' '||slice[i]=='\0')
+            {
+                aux[count][j]='\0';
+                count++;  //for next word
+                j=0;    //for next word, init index to 0
+            }
+            else
+            {
+                aux[count][j]=slice[i];
+                j++;
+            }
+        }   
+        for (int i = 0; i < count +1; i++)
+        {
+            command_args[i] = aux[i];   
+        }
+
         pid = fork();
 
         if (pid == 0) // run the command in terminal and ends the child process
         {
-            system(slice);
+            execvp(command_args[0], command_args);
             exit(pid);
         }
         slice = strtok(NULL, ";");
+        a++;
     }
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < a; i++)
     {
         if (pid > 0) // shell waits for the end of the commands processes
         {

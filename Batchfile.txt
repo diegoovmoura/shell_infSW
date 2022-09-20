@@ -1,0 +1,2 @@
+ls;echo "oi";pwd
+exit
