@@ -1,2 +1,22 @@
-ls;echo "oi";pwd
+ls
+ls
+ls
+ls
+style parallel
+ls -l;pwd
+ls -l;pwd
+style sequential
 exit
+b
+b
+b
+b
+b
+b
+b
+b
+b
+b
+b
+b
+b
