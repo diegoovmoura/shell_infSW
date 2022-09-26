@@ -71,7 +71,6 @@ int main(int argc, char *argv[])
             }
         }
 
-        return 0;
     }  
     else // INERATIVE
     {
@@ -140,6 +139,16 @@ void run_sequential(char args[MAX_LINE_LENGTH], pid_t pid)
         int count = 0, j = 0;
         for (int i = 0; i < strlen(slice); i++)
         {
+            // in case there are multiples spaces between arguments
+            if (i > 0 && slice[i - 1] == ' ' && slice[i] == ' ')
+            {
+                continue;
+            }
+            // if has spaces before the first command
+            else if (i == 0 && slice[i] == ' ')
+            {
+                continue;
+            }
             // if space or NULL found, assign NULL into aux
             if(slice[i]==' '||slice[i]=='\0')
             {
@@ -193,8 +202,18 @@ void run_parallel(char args[40], pid_t pid)
         int count = 0, j = 0;
         for (int i = 0; i < strlen(slice); i++)
         {
+            // in case there are multiples spaces between arguments
+            if (i > 0 && slice[i - 1] == ' ' && slice[i] == ' ')
+            {
+                continue;
+            }
+            // if has spaces before the first command
+            else if (i == 0 && slice[i] == ' ')
+            {
+                continue;
+            }
             // if space or NULL found, assign NULL into aux
-            if(slice[i]==' '||slice[i]=='\0')
+            else if(slice[i]==' '||slice[i]=='\0')
             {
                 aux[count][j]='\0';
                 count++;  //for next word
