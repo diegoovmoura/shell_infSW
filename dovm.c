@@ -13,26 +13,30 @@ void run_parallel(char args[MAX_LINE_LENGTH], pid_t pid);
 
 int main(int argc, char *argv[])
 {
-    char args[MAX_LINE_LENGTH];	/* command line has max of 40 arguments */
+    char args[MAX_LINE_LENGTH];	// command line has max of 40 arguments
+    char save[MAX_LINE_LENGTH]; // copty of the command line for the history
+    int has_save = 0;
     int should_run = 1, verify_style = 1;
     pid_t pid;
     FILE *file;
-
+     
     if (argc > 1) // BATCH
     {
         char *command_args[40] = {0};
         file = fopen(argv[1], "r");
 
+        // if the file does not open
         if (file == NULL)
-        {
+        { 
             printf("error");
             return 0;
         }
 
         int count = 0;
-        while(fgets(args, MAX_LINE_LENGTH, file))
+        while(fgets(args, MAX_LINE_LENGTH, file)) // read the file
         {
             printf("%s",args);
+            // removing the \n and \r in the final of string
             for (int i = 0; i < strlen(args); i++)
             {
                 if (args[i] == '\n' || args[i] == '\r')
@@ -41,6 +45,7 @@ int main(int argc, char *argv[])
                 }    
             }
             
+            // saving and alocating the string
             command_args[count] = malloc(MAX_LINE_LENGTH);
             strcpy(command_args[count], args);
 
@@ -49,25 +54,54 @@ int main(int argc, char *argv[])
             }    
             count++;    
         }
+
         for (int i = 0; i < count; i++)
         {
             // sequential mode
             if (verify_style == 1)
-            {
+            {       
+                if (strcmp(command_args[i], "!!") == 0) { //history
+                    if (has_save == 0) // check if has a command in history
+                    {
+                        printf("No commands\n");
+                        continue;
+                    }                 
+                    run_sequential(save, pid); // passing the previous command line
+                    continue;
+                }
                 if (strcmp(command_args[i], "style parallel") == 0) { //change style
                     verify_style = 0;
                     continue;
                 }
                 run_sequential(command_args[i], pid);
+                if (strlen(command_args[i]) > 1)
+                {
+                    strcpy(save, command_args[i]);
+                    has_save = 1;
+                }   
             }
             // parallel mode
             else
             {
+                if (strcmp(command_args[i], "!!") == 0) { //history
+                    if (has_save == 0) // check if has a command in history
+                    {
+                        printf("No commands\n");
+                        continue;
+                    }
+                    run_sequential(save, pid); // passing the previous command line
+                    continue;
+                }
                 if (strcmp(command_args[i], "style sequential") == 0) { //change style
                     verify_style = 1;
                     continue;
                 } 
                 run_parallel(command_args[i], pid);
+                if (strlen(command_args[i]) > 1)
+                {
+                    strcpy(save, command_args[i]);
+                    has_save = 1;
+                }   
             }
         }
 
@@ -85,15 +119,29 @@ int main(int argc, char *argv[])
                 fgets(args, sizeof(args), stdin);
                 args[strlen(args) - 1] = 0;
                 
+                if (strcmp(args, "!!") == 0)
+                {
+                    if (has_save == 0) // check if has a command in history
+                    {
+                        printf("No commands\n");
+                    }                
+                    run_sequential(save, pid);
+                    continue;
+                }          
                 if (strcmp(args, "exit") == 0) // exit 
                 {  
                     break;
                 }
-                if (strcmp(args, "style parallel") == 0) //changing style
+                else if (strcmp(args, "style parallel") == 0) //changing style
                 {  
                     verify_style = 0;
                     continue;
-                } 
+                }
+                if (strlen(args) > 1)
+                {
+                    strcpy(save, args);
+                    has_save = 1;
+                }        
 
                 // runing the command line in terminal
                 run_sequential(args, pid);
@@ -108,6 +156,15 @@ int main(int argc, char *argv[])
                 fgets(args, sizeof(args), stdin);
                 args[strlen(args) - 1] = 0;
                 
+                if (strcmp(args, "!!") == 0)
+                {
+                    if (has_save == 0) // check if has a command in history
+                    {
+                        printf("No commands\n");
+                    }                
+                    run_sequential(save, pid);
+                    continue;
+                }        
                 if (strcmp(args, "exit") == 0) { //exit
                     break;
                 } 
@@ -115,6 +172,11 @@ int main(int argc, char *argv[])
                     verify_style = 1;
                     continue;
                 } 
+                if (strlen(args) > 1)
+                {
+                    strcpy(save, args);
+                    has_save = 1;
+                }     
 
                 // runing the command line in terminal
                 run_parallel(args, pid);      

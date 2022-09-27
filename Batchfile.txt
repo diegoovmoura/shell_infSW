@@ -1,10 +1,11 @@
 ls
 ls
-ls
-ls
+!!
+!!
 style parallel
-ls -l;pwd
-ls -l;pwd
+ls -l; pwd
+!!
+pwd
 style sequential
 exit
 b
