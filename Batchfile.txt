@@ -8,7 +8,6 @@ ls -l; pwd
 !!
 pwd
 style sequential
-exit
 b
 b
 b

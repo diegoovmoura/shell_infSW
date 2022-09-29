@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
     }
     else if (argc == 2) // BATCH
     {
+        has_save = 0;
         char *command_args[40] = {0};
         file = fopen(argv[1], "r");
 
@@ -37,9 +38,9 @@ int main(int argc, char *argv[])
         }
 
         int count = 0;
+
         while(fgets(args, MAX_LINE_LENGTH, file)) // read the file
         {
-            printf("%s",args);
             // removing the \n and \r in the final of string
             for (int i = 0; i < strlen(args); i++)
             {
@@ -54,10 +55,24 @@ int main(int argc, char *argv[])
             strcpy(command_args[count], args);
 
             if (strcmp(command_args[count], "exit") == 0) { //exit
+                has_save = 1;
                 break;
             }    
             count++;    
         }
+
+        //if the archive has no exit close the program
+        if (has_save == 0)
+        {
+            printf("Invalid Archive!\n");
+            return 0;
+        }     
+
+        // print the commands in the archive
+        for (int i = 0; i < count; i++)
+        {
+            printf("%s\n", command_args[i]);
+        }    
 
         for (int i = 0; i < count; i++)
         {
@@ -121,6 +136,14 @@ int main(int argc, char *argv[])
                 fflush(stdout);
 
                 fgets(args, sizeof(args), stdin);
+
+                // verifing the max lenght of the command line 
+                if (strlen(args) > 39)
+                {
+                    printf("Linha de Muito Grande!\n");
+                    break;
+                }
+                
                 args[strlen(args) - 1] = 0;
                 
                 if (strcmp(args, "!!") == 0)
@@ -158,6 +181,13 @@ int main(int argc, char *argv[])
                 fflush(stdout);
 
                 fgets(args, sizeof(args), stdin);
+                // verifing the max lenght of the command line 
+                if (strlen(args) > 39)
+                {
+                    printf("Linha de Muito Grande!\n");
+                    break;
+                }
+
                 args[strlen(args) - 1] = 0;
                 
                 if (strcmp(args, "!!") == 0)
