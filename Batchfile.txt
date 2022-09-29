@@ -3,6 +3,7 @@ ls
 !!
 !!
 style parallel
+!!
 ls -l; pwd
 !!
 pwd

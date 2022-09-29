@@ -20,7 +20,11 @@ int main(int argc, char *argv[])
     pid_t pid;
     FILE *file;
      
-    if (argc > 1) // BATCH
+    if (argc > 2)
+    {
+        printf("Numero de parametros incorreto!\n");
+    }
+    else if (argc == 2) // BATCH
     {
         char *command_args[40] = {0};
         file = fopen(argv[1], "r");
@@ -28,7 +32,7 @@ int main(int argc, char *argv[])
         // if the file does not open
         if (file == NULL)
         { 
-            printf("error");
+            printf("erro ao abrir o arquivo!\n");
             return 0;
         }
 
@@ -120,7 +124,7 @@ int main(int argc, char *argv[])
                 args[strlen(args) - 1] = 0;
                 
                 if (strcmp(args, "!!") == 0)
-                {
+                {        
                     if (has_save == 0) // check if has a command in history
                     {
                         printf("No commands\n");
@@ -162,7 +166,7 @@ int main(int argc, char *argv[])
                     {
                         printf("No commands\n");
                     }                
-                    run_sequential(save, pid);
+                    run_parallel(save, pid);
                     continue;
                 }        
                 if (strcmp(args, "exit") == 0) { //exit
@@ -189,7 +193,7 @@ int main(int argc, char *argv[])
 
 void run_sequential(char args[MAX_LINE_LENGTH], pid_t pid)
 {
-    int exist;
+    int lock = 0;
     // slicing the line of commands
     char *slice = strtok(args, ";"); 
     while (slice != NULL)
@@ -200,23 +204,28 @@ void run_sequential(char args[MAX_LINE_LENGTH], pid_t pid)
         // slicing again to take the command arguments
         int count = 0, j = 0;
         for (int i = 0; i < strlen(slice); i++)
-        {
-            // in case there are multiples spaces between arguments
-            if (i > 0 && slice[i - 1] == ' ' && slice[i] == ' ')
+        {              
+            // taking off unecessaries spaces
+            if (i == 0 && slice[i] == ' ')
             {
                 continue;
             }
-            // if has spaces before the first command
-            else if (i == 0 && slice[i] == ' ')
+            if (slice[i] == ' ' && slice[i - 1] != ' ' && slice[i+1] == ' ')
             {
                 continue;
             }
+            
+            else if (i > 0 && slice[i - 1] == ' ' && slice[i] == ' ')
+            {
+                continue;
+            }
+
             // if space or NULL found, assign NULL into aux
-            if(slice[i]==' '||slice[i]=='\0')
+            else if(slice[i]==' '||slice[i]=='\0')
             {
                 aux[count][j]='\0';
-                count++;  //for next word
-                j=0;    //for next word, init index to 0
+                count++;  //for next command
+                j=0;    //for set no aruguments
             }
             else
             {
@@ -237,7 +246,7 @@ void run_sequential(char args[MAX_LINE_LENGTH], pid_t pid)
         }
         else // run the command in terminal and ends the child process
         {
-            if (exist = execvp(command_args[0], command_args) == -1)
+            if (execvp(command_args[0], command_args) == -1)
             {
                 printf("%s: command not found\n", command_args[0]);
             }
@@ -251,8 +260,7 @@ void run_sequential(char args[MAX_LINE_LENGTH], pid_t pid)
 
 void run_parallel(char args[40], pid_t pid)
 {
-    int a = 0;
-    int exist;
+    int a = 0, lock = 0;
     // slicing the line of commands
     char *slice = strtok(args, ";");
     while (slice != NULL)
@@ -263,23 +271,28 @@ void run_parallel(char args[40], pid_t pid)
         // slicing again to take the command arguments
         int count = 0, j = 0;
         for (int i = 0; i < strlen(slice); i++)
-        {
-            // in case there are multiples spaces between arguments
-            if (i > 0 && slice[i - 1] == ' ' && slice[i] == ' ')
+        {      
+            // taking off unecessaries spaces
+            if (i == 0 && slice[i] == ' ')
             {
                 continue;
             }
-            // if has spaces before the first command
-            else if (i == 0 && slice[i] == ' ')
+            if (slice[i] == ' ' && slice[i - 1] != ' ' && slice[i+1] == ' ')
             {
                 continue;
             }
+            
+            else if (i > 0 && slice[i - 1] == ' ' && slice[i] == ' ')
+            {
+                continue;
+            }
+
             // if space or NULL found, assign NULL into aux
             else if(slice[i]==' '||slice[i]=='\0')
             {
                 aux[count][j]='\0';
-                count++;  //for next word
-                j=0;    //for next word, init index to 0
+                count++;  //for next command
+                j=0;    //for set no aruguments
             }
             else
             {
@@ -296,14 +309,14 @@ void run_parallel(char args[40], pid_t pid)
 
         if (pid == 0) // run the command in terminal and ends the child process
         {
-            if (exist = execvp(command_args[0], command_args) == -1)
+            if (execvp(command_args[0], command_args) == -1)
             {
                 printf("%s: command not found\n", command_args[0]);
             }
             exit(pid);
         }
         slice = strtok(NULL, ";");
-        a++;
+        a++; // amount of slices
     }
     for (int i = 0; i < a; i++)
     {
